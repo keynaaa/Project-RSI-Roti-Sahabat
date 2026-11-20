@@ -1,0 +1,413 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model Pengguna {
+  Id_Pengguna     Int            @id @default(autoincrement())
+  Nama_Pengguna   String         @db.VarChar(100)
+  Username        String         @unique @db.VarChar(50)
+  Email           String         @unique @db.VarChar(100)
+  Password_Hash   String         @db.VarChar(255)
+  No_Telp         String?        @db.VarChar(20)
+  Foto_Profil     String?        @db.VarChar(255)
+  Status_Aktif    Boolean?       @default(true)
+  Terakhir_Login  DateTime?
+  Tanggal_Dibuat  DateTime?      @default(now())
+  Tanggal_Diubah  DateTime?
+
+  Peran           Peran[]
+  Cabang          Cabang[]
+  Pesanan         Pesanan[]
+  Penjualan       Penjualan[]
+  RiwayatHarga    RiwayatHarga[]
+  AuditLog        AuditLog[]
+
+  @@map("PENGGUNA")
+}
+
+model Peran {
+  Id_Peran        Int       @id @default(autoincrement())
+  Id_Pengguna     Int
+  Nama_Peran      String    @db.VarChar(50)
+  Deskripsi_Peran String?   @db.VarChar(200)
+  Status_Aktif    Boolean?  @default(true)
+
+  Pengguna        Pengguna  @relation(fields: [Id_Pengguna], references: [Id_Pengguna], onUpdate: NoAction, onDelete: NoAction)
+
+  @@map("PERAN")
+}
+
+model Cabang {
+  Id_Cabang             Int       @id @default(autoincrement())
+  Id_Pengguna           Int?
+  Kode_Cabang           String    @unique @db.VarChar(30)
+  Nama_Cabang           String    @db.VarChar(100)
+  Alamat                String?   @db.VarChar(200)
+  No_Telepon            String?   @db.VarChar(20)
+  Nama_Penanggung_Jawab String?   @db.VarChar(100)
+  Tanggal_Dibuka        DateTime? @db.Date
+  Tanggal_Dibuat        DateTime? @default(now())
+  Status_Cabang         String?   @default("Aktif") @db.VarChar(20)
+
+  Pengguna              Pengguna? @relation(fields: [Id_Pengguna], references: [Id_Pengguna], onUpdate: NoAction, onDelete: NoAction)
+  Gudang                Gudang[]
+  Pesanan               Pesanan[]
+  Penjualan             Penjualan[]
+  RiwayatStok           RiwayatStok[]
+
+  @@map("CABANG")
+}
+
+model Gudang {
+  Id_Gudang           Int          @id @default(autoincrement())
+  Id_Cabang           Int?
+  Nama_Gudang         String       @db.VarChar(100)
+  Jenis_Gudang        String?      @db.VarChar(50)
+  Kapasitas_Gudang    Decimal?     @db.Decimal(12, 2)
+  Status_Operasional  String?      @db.VarChar(30)
+  Penanggung_Jawab    String?      @db.VarChar(100)
+  Jalan               String?      @db.VarChar(150)
+  Kota                String?      @db.VarChar(60)
+  Provinsi            String?      @db.VarChar(60)
+  Kode_Pos            String?      @db.VarChar(10)
+
+  Cabang              Cabang?      @relation(fields: [Id_Cabang], references: [Id_Cabang], onUpdate: NoAction, onDelete: NoAction)
+  Persediaan          Persediaan[]
+
+  @@map("GUDANG")
+}
+
+model Kategori {
+  Id_Kategori   Int       @id @default(autoincrement())
+  Nama_Kategori String    @db.VarChar(100)
+  Deskripsi     String?   @db.VarChar(255)
+  Status_Aktif  Boolean?  @default(true)
+  Tanggal_Dibuat DateTime? @default(now())
+
+  Produk        Produk[]
+
+  @@map("KATEGORI")
+}
+
+model Produk {
+  Id_Produk        Int            @id @default(autoincrement())
+  Id_Kategori      Int?
+  Kode_Produk      String         @unique @db.VarChar(30)
+  Nama_Produk      String         @unique @db.VarChar(100)
+  Deskripsi_Produk String?        @db.VarChar(500)
+  Jenis_Produk     String?        @db.VarChar(50)
+  Foto_Produk      String?        @db.VarChar(255)
+  Berat_Produk     Decimal?       @db.Decimal(10, 2)
+  Status_Produk    String?        @default("Aktif") @db.VarChar(30)
+  Tanggal_Dibuat   DateTime?      @default(now())
+
+  Kategori         Kategori?      @relation(fields: [Id_Kategori], references: [Id_Kategori], onUpdate: NoAction, onDelete: NoAction)
+  VarianProduk     VarianProduk[]
+
+  @@index([Id_Kategori], map: "IX_PRODUK_Kategori")
+  @@map("PRODUK")
+}
+
+model VarianProduk {
+  Id_Varian        Int                @id @default(autoincrement())
+  Id_Produk        Int
+  Kode_Varian      String             @unique @db.VarChar(30)
+  Nama_Varian      String             @db.VarChar(100)
+  Barcode          String?            @db.VarChar(50)
+  Status_Aktif     Boolean?           @default(true)
+
+  Produk           Produk             @relation(fields: [Id_Produk], references: [Id_Produk], onUpdate: NoAction, onDelete: NoAction)
+  HargaProduk      HargaProduk[]
+  Persediaan       Persediaan[]
+  DetailPesanan    DetailPesanan[]
+  DetailPenjualan  DetailPenjualan[]
+  DetailPengiriman DetailPengiriman[]
+  RiwayatHarga     RiwayatHarga[]
+
+  @@map("VARIAN_PRODUK")
+}
+
+model HargaProduk {
+  Id_Harga_Produk      Int          @id @default(autoincrement())
+  Id_Varian            Int
+  Harga_Jual           Decimal      @db.Decimal(15, 2)
+  Harga_Reseller       Decimal?     @db.Decimal(15, 2)
+  Harga_Promo          Decimal?     @db.Decimal(15, 2)
+  Tanggal_Dibuat       DateTime?    @db.Date
+  Tanggal_Akhir        DateTime?    @db.Date
+
+  VarianProduk         VarianProduk @relation(fields: [Id_Varian], references: [Id_Varian], onUpdate: NoAction, onDelete: NoAction)
+
+  @@map("HARGA_PRODUK")
+}
+
+model RiwayatHarga {
+  Id_Riwayat_Harga Int          @id @default(autoincrement())
+  Id_Varian        Int
+  Id_Pengguna      Int?
+  Harga_Lama       Decimal      @db.Decimal(15, 2)
+  Harga_Baru       Decimal      @db.Decimal(15, 2)
+  Selisih          Decimal      @db.Decimal(15, 2)
+  Waktu            DateTime?    @default(now())
+
+  VarianProduk     VarianProduk @relation(fields: [Id_Varian], references: [Id_Varian], onUpdate: NoAction, onDelete: NoAction)
+  Pengguna         Pengguna?    @relation(fields: [Id_Pengguna], references: [Id_Pengguna], onUpdate: NoAction, onDelete: NoAction)
+
+  @@map("RIWAYAT_HARGA")
+}
+
+model Persediaan {
+  Id_Persediaan          Int           @id @default(autoincrement())
+  Id_Gudang              Int
+  Id_Varian              Int?
+  Id_Bahan_Baku          Int?
+  Jumlah_Stok            Decimal?      @default(0) @db.Decimal(12, 2)
+  Stok_Tersedia          Decimal?      @default(0) @db.Decimal(12, 2)
+  Stok_Dipesan           Decimal?      @default(0) @db.Decimal(12, 2)
+  Stok_Minimum           Decimal?      @default(0) @db.Decimal(12, 2)
+  Stok_Maksimal          Decimal?      @db.Decimal(12, 2)
+  Tanggal_Stok_Terakhir  DateTime?
+  Tanggal_Dibuat         DateTime?     @default(now())
+  Tanggal_Diubah         DateTime?
+
+  Gudang                 Gudang        @relation(fields: [Id_Gudang], references: [Id_Gudang], onUpdate: NoAction, onDelete: NoAction)
+  VarianProduk           VarianProduk? @relation(fields: [Id_Varian], references: [Id_Varian], onUpdate: NoAction, onDelete: NoAction)
+  RiwayatStok            RiwayatStok[]
+
+  @@unique([Id_Gudang, Id_Varian], map: "UQ_PERSEDIAAN_Gudang_Varian")
+  @@map("PERSEDIAAN")
+}
+
+model RiwayatStok {
+  Id_Riwayat_Stok   Int         @id @default(autoincrement())
+  Id_Persediaan     Int
+  Id_Cabang         Int?
+  Jenis_Transaksi   String?     @db.VarChar(40)
+  Jenis_Perubahan   String?     @db.VarChar(30)
+  Stok_Sebelum      Decimal?    @db.Decimal(12, 2)
+  Stok_Sesudah      Decimal?    @db.Decimal(12, 2)
+  Tanggal_Transaksi DateTime?   @default(now())
+  Id_Referensi      Int?
+  Nomor_Referensi   String?     @db.VarChar(40)
+  Keterangan        String?     @db.VarChar(255)
+
+  Persediaan        Persediaan  @relation(fields: [Id_Persediaan], references: [Id_Persediaan], onUpdate: NoAction, onDelete: NoAction)
+  Cabang            Cabang?     @relation(fields: [Id_Cabang], references: [Id_Cabang], onUpdate: NoAction, onDelete: NoAction)
+
+  @@map("RIWAYAT_STOK")
+}
+
+model Pelanggan {
+  Id_Pelanggan    Int         @id @default(autoincrement())
+  Nama_Pelanggan  String      @db.VarChar(100)
+  Jenis_Pelanggan String?     @db.VarChar(30)
+  No_Telp         String?     @db.VarChar(20)
+  Jalan           String?     @db.VarChar(150)
+  Kota            String?     @db.VarChar(60)
+  Provinsi        String?     @db.VarChar(60)
+  Kode_Pos        String?     @db.VarChar(10)
+
+  Pesanan         Pesanan[]
+  Penjualan       Penjualan[]
+
+  @@map("PELANGGAN")
+}
+
+model Pesanan {
+  Id_Pesanan        Int             @id @default(autoincrement())
+  Id_Pelanggan      Int
+  Id_Pengguna       Int?
+  Id_Cabang         Int?
+  Kode_Pesanan      String          @unique @db.VarChar(30)
+  Tanggal_Pesanan   DateTime?       @default(now())
+  Tanggal_Dibutuhkan DateTime?      @db.Date
+  Tanggal_Dibuat    DateTime?       @default(now())
+  Tanggal_Diubah    DateTime?
+  Catatan_Pesanan   String?         @db.VarChar(500)
+  Total_Pesanan     Decimal?        @default(0) @db.Decimal(15, 2)
+  Status_Pesanan    String?         @default("Baru") @db.VarChar(30)
+  Biaya_Pengiriman  Decimal?        @default(0) @db.Decimal(15, 2)
+  Nama_Penerima     String?         @db.VarChar(100)
+  Alamat            String?         @db.VarChar(200)
+  Kota_Pengiriman   String?         @db.VarChar(60)
+
+  Pelanggan         Pelanggan       @relation(fields: [Id_Pelanggan], references: [Id_Pelanggan], onUpdate: NoAction, onDelete: NoAction)
+  Pengguna          Pengguna?       @relation(fields: [Id_Pengguna], references: [Id_Pengguna], onUpdate: NoAction, onDelete: NoAction)
+  Cabang            Cabang?         @relation(fields: [Id_Cabang], references: [Id_Cabang], onUpdate: NoAction, onDelete: NoAction)
+  DetailPesanan     DetailPesanan[]
+  Penjualan         Penjualan[]
+  Pengiriman        Pengiriman[]
+
+  @@index([Tanggal_Pesanan], map: "IX_PESANAN_Tanggal")
+  @@map("PESANAN")
+}
+
+model DetailPesanan {
+  Id_Detail_Pesanan Int          @id @default(autoincrement())
+  Id_Pesanan        Int
+  Id_Varian         Int
+  Jumlah_Pesanan    Int
+  Harga_Satuan      Decimal      @db.Decimal(15, 2)
+  Diskon_Item       Decimal?     @default(0) @db.Decimal(15, 2)
+  Keterangan        String?      @db.VarChar(255)
+
+  Pesanan           Pesanan      @relation(fields: [Id_Pesanan], references: [Id_Pesanan], onUpdate: NoAction, onDelete: NoAction)
+  VarianProduk      VarianProduk @relation(fields: [Id_Varian], references: [Id_Varian], onUpdate: NoAction, onDelete: NoAction)
+
+  @@map("DETAIL_PESANAN")
+}
+
+model Penjualan {
+  Id_Penjualan     Int               @id @default(autoincrement())
+  Id_Pesanan       Int?
+  Id_Cabang        Int?
+  Id_Pelanggan     Int?
+  Id_Pengguna      Int?
+  Kode_Penjualan   String            @unique @db.VarChar(30)
+  Tanggal_Penjualan DateTime?        @default(now())
+  Jenis_Penjualan  String?           @db.VarChar(30)
+  Subtotal         Decimal?          @default(0) @db.Decimal(15, 2)
+  Diskon           Decimal?          @default(0) @db.Decimal(15, 2)
+  Pajak            Decimal?          @default(0) @db.Decimal(15, 2)
+  Biaya_Lain       Decimal?          @default(0) @db.Decimal(15, 2)
+  Total_Penjualan  Decimal?          @default(0) @db.Decimal(15, 2)
+  Jumlah_Dibayar   Decimal?          @default(0) @db.Decimal(15, 2)
+  Jumlah_Kembalian Decimal?          @default(0) @db.Decimal(15, 2)
+  Keuntungan       Decimal?          @db.Decimal(15, 2)
+  Status_Penjualan String?           @db.VarChar(30)
+  Keterangan       String?           @db.VarChar(255)
+
+  Pesanan          Pesanan?          @relation(fields: [Id_Pesanan], references: [Id_Pesanan], onUpdate: NoAction, onDelete: NoAction)
+  Cabang           Cabang?           @relation(fields: [Id_Cabang], references: [Id_Cabang], onUpdate: NoAction, onDelete: NoAction)
+  Pelanggan        Pelanggan?        @relation(fields: [Id_Pelanggan], references: [Id_Pelanggan], onUpdate: NoAction, onDelete: NoAction)
+  Pengguna         Pengguna?         @relation(fields: [Id_Pengguna], references: [Id_Pengguna], onUpdate: NoAction, onDelete: NoAction)
+  DetailPenjualan  DetailPenjualan[]
+  Pembayaran       Pembayaran[]
+
+  @@index([Tanggal_Penjualan], map: "IX_PENJUALAN_Tanggal")
+  @@map("PENJUALAN")
+}
+
+model DetailPenjualan {
+  Id_Detail_Penjualan Int          @id @default(autoincrement())
+  Id_Penjualan        Int
+  Id_Varian           Int
+  Jumlah_Item         Int
+  Harga_Satuan        Decimal      @db.Decimal(15, 2)
+  Diskon_Item         Decimal?     @default(0) @db.Decimal(15, 2)
+  Pajak_Item          Decimal?     @default(0) @db.Decimal(15, 2)
+  Keterangan          String?      @db.VarChar(255)
+
+  Penjualan           Penjualan    @relation(fields: [Id_Penjualan], references: [Id_Penjualan], onUpdate: NoAction, onDelete: NoAction)
+  VarianProduk        VarianProduk @relation(fields: [Id_Varian], references: [Id_Varian], onUpdate: NoAction, onDelete: NoAction)
+
+  @@map("DETAIL_PENJUALAN")
+}
+
+model MetodePembayaran {
+  Id_Metode    Int          @id @default(autoincrement())
+  Nama_Metode  String       @db.VarChar(50)
+  Jenis_Metode String?      @db.VarChar(30)
+  Deskripsi    String?      @db.VarChar(200)
+  Status_Aktif Boolean?     @default(true)
+
+  Pembayaran   Pembayaran[]
+
+  @@map("METODE_PEMBAYARAN")
+}
+
+model Pembayaran {
+  Id_Pembayaran     Int              @id @default(autoincrement())
+  Id_Penjualan      Int?
+  Id_Metode         Int
+  Id_Akun_Keuangan  Int?
+  No_Pembayaran     String           @unique @db.VarChar(40)
+  Tanggal_Pembayaran DateTime?       @default(now())
+  Jumlah_Pembayaran Decimal          @db.Decimal(15, 2)
+  Jenis_Pembayaran  String?          @db.VarChar(30)
+  Bukti_Pembayaran  String?          @db.VarChar(255)
+  Status_Pembayaran String?          @db.VarChar(30)
+  Keterangan        String?          @db.VarChar(255)
+
+  Penjualan         Penjualan?       @relation(fields: [Id_Penjualan], references: [Id_Penjualan], onUpdate: NoAction, onDelete: NoAction)
+  MetodePembayaran  MetodePembayaran @relation(fields: [Id_Metode], references: [Id_Metode], onUpdate: NoAction, onDelete: NoAction)
+
+  @@map("PEMBAYARAN")
+}
+
+model Kurir {
+  Id_Kurir        Int          @id @default(autoincrement())
+  Nama_Kurir      String       @db.VarChar(100)
+  Jenis_Kurir     String?      @db.VarChar(40)
+  No_Telp         String?      @db.VarChar(20)
+  Nama_Perusahaan String?      @db.VarChar(100)
+  Status_Kurir    String?      @db.VarChar(30)
+
+  Pengiriman      Pengiriman[]
+
+  @@map("KURIR")
+}
+
+model Pengiriman {
+  Id_Pengiriman      Int                @id @default(autoincrement())
+  Id_Pesanan         Int?
+  Id_Kurir           Int?
+  Id_Transfer        Int?
+  Tanggal_Pengiriman DateTime?
+  Tanggal_Estimasi   DateTime?
+  Tanggal_Diterima   DateTime?
+  Nomor_Resi         String?            @db.VarChar(60)
+  Nama_Penerima      String?            @db.VarChar(100)
+  Alamat_Asal        String?            @db.VarChar(200)
+  Alamat_Tujuan      String?            @db.VarChar(200)
+  Biaya_Pengiriman   Decimal?           @default(0) @db.Decimal(15, 2)
+  Bukti_Pengiriman   String?            @db.VarChar(255)
+  Status_Pengiriman  String?            @db.VarChar(30)
+  Keterangan         String?            @db.VarChar(255)
+
+  Pesanan            Pesanan?           @relation(fields: [Id_Pesanan], references: [Id_Pesanan], onUpdate: NoAction, onDelete: NoAction)
+  Kurir              Kurir?             @relation(fields: [Id_Kurir], references: [Id_Kurir], onUpdate: NoAction, onDelete: NoAction)
+  DetailPengiriman   DetailPengiriman[]
+
+  @@index([Nomor_Resi], map: "IX_PENGIRIMAN_Resi")
+  @@map("PENGIRIMAN")
+}
+
+model DetailPengiriman {
+  Id_Detail_Pengiriman Int          @id @default(autoincrement())
+  Id_Pengiriman        Int
+  Id_Varian            Int
+  Jumlah_Dikirim       Int?
+  Jumlah_Diterima      Int?
+  Kondisi_Barang       String?      @db.VarChar(100)
+  Keterangan           String?      @db.VarChar(255)
+
+  Pengiriman           Pengiriman   @relation(fields: [Id_Pengiriman], references: [Id_Pengiriman], onUpdate: NoAction, onDelete: NoAction)
+  VarianProduk         VarianProduk @relation(fields: [Id_Varian], references: [Id_Varian], onUpdate: NoAction, onDelete: NoAction)
+
+  @@map("DETAIL_PENGIRIMAN")
+}
+
+model AuditLog {
+  Id_Audit_Log        Int       @id @default(autoincrement())
+  Id_Pengguna         Int?
+  Nama_Tabel          String?   @db.VarChar(100)
+  Id_Data             Int?
+  Jenis_Aktivitas     String?   @db.VarChar(30)
+  Data_Sebelum        String?   @db.VarChar(Max)
+  Data_Sesudah        String?   @db.VarChar(Max)
+  Alamat_IP           String?   @db.VarChar(50)
+  User_Agent          String?   @db.VarChar(255)
+  Tanggal_Aktivitas   DateTime? @default(now())
+  Status_Aktivitas    String?   @db.VarChar(30)
+  Deskripsi_Aktivitas String?   @db.VarChar(500)
+
+  Pengguna            Pengguna? @relation(fields: [Id_Pengguna], references: [Id_Pengguna], onUpdate: NoAction, onDelete: NoAction)
+
+  @@map("AUDIT_LOG")
+}

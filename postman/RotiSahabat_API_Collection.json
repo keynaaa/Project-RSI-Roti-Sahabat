@@ -1,0 +1,1720 @@
+{
+  "info": {
+    "_postman_id": "c3e859b2-9d3a-4e2b-b8c1-1e9d8e5792a1",
+    "name": "Katalog Digital & Kasir Toko Roti Sahabat - API v1.2",
+    "description": "Postman Collection lengkap untuk pengujian API Toko Roti Sahabat Kebumen sesuai PRD v1.2, FSD v1.0, dan SRS IEEE 830.\n\nAkun Pengujian:\n- Owner: username `owner` / password `Owner123!`\n- Staff: username `adminops` / password `Staff123!`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "owner_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "staff_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "id_produk_uji",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "id_varian_uji",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "id_pesanan_uji",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "nomor_resi_uji",
+      "value": "RESI001",
+      "type": "string"
+    },
+    {
+      "key": "id_penjualan_uji",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "id_pengiriman_uji",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Autentikasi (FSD-2.1)",
+      "item": [
+        {
+          "name": "Login Owner (Simpan Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set(\"owner_token\", jsonData.data.token);",
+                  "    console.log(\"Owner token tersimpan:\", jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"owner\",\n  \"password\": \"Owner123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login Staff / Kasir (Simpan Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set(\"staff_token\", jsonData.data.token);",
+                  "    console.log(\"Staff token tersimpan:\", jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"adminops\",\n  \"password\": \"Staff123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login Gagal (Password Salah -> ERR-AUTH-01)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Error code is ERR-AUTH-01\", function () {",
+                  "    pm.expect(jsonData.kode).to.eql(\"ERR-AUTH-01\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"owner\",\n  \"password\": \"PasswordSalah123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cek Sesi Profil (GET /api/auth/me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Logout (POST /api/auth/logout)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Katalog Publik (FSD-2.9, SCR-03, SCR-04)",
+      "item": [
+        {
+          "name": "GET Katalog Produk (Semua - Halaman 1)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/produk?halaman=1&limit=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "produk"
+              ],
+              "query": [
+                {
+                  "key": "halaman",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Katalog Filter Kategori Roti",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/produk?kategori=Roti",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "produk"
+              ],
+              "query": [
+                {
+                  "key": "kategori",
+                  "value": "Roti"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Katalog Pencarian Kata Kunci",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/produk?q=Cokelat",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "produk"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Cokelat"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Detail Produk (SCR-04)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/produk/{{id_produk_uji}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "produk",
+                "{{id_produk_uji}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Keranjang & Pemesanan Pelanggan (FSD-2.10 - 2.13)",
+      "item": [
+        {
+          "name": "POST Cek Stok Keranjang (Valid)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"idVarian\": 1,\n      \"qty\": 2\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/keranjang/cek",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "keranjang",
+                "cek"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Cek Stok Keranjang (Melebihi Stok -> ERR-STK-02)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 422\", function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Error code is ERR-STK-02\", function () {",
+                  "    pm.expect(jsonData.kode).to.eql(\"ERR-STK-02\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"idVarian\": 1,\n      \"qty\": 9999\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/keranjang/cek",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "keranjang",
+                "cek"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Buat Pesanan - Ambil di Toko",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.idPesanan) {",
+                  "    pm.collectionVariables.set(\"id_pesanan_uji\", String(jsonData.data.idPesanan));",
+                  "    console.log(\"ID Pesanan tersimpan:\", jsonData.data.idPesanan);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"idVarian\": 1,\n      \"qty\": 2\n    }\n  ],\n  \"metode\": \"AmbilDiToko\",\n  \"catatan\": \"Diambil sore sekitar jam 16.00\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pesanan",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "pesanan"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Buat Pesanan - Kirim Kurir (Generate Link WA)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"idVarian\": 1,\n      \"qty\": 3\n    }\n  ],\n  \"metode\": \"Kirim\",\n  \"namaPenerima\": \"Alya Safitri\",\n  \"telepon\": \"081234567890\",\n  \"alamat\": \"Jl. Pahlawan No. 45\",\n  \"kota\": \"Kebumen\",\n  \"catatan\": \"Tolong bungkus rapi dengan pita\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pesanan",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "pesanan"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Buat Pesanan - Kirim Tanpa Alamat (ERR-SHP-01)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 422\", function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Error code is ERR-SHP-01\", function () {",
+                  "    pm.expect(jsonData.kode).to.eql(\"ERR-SHP-01\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"idVarian\": 1,\n      \"qty\": 1\n    }\n  ],\n  \"metode\": \"Kirim\",\n  \"namaPenerima\": \"Alya\",\n  \"telepon\": \"081234567890\",\n  \"alamat\": \"\",\n  \"kota\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pesanan",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "pesanan"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Ringkasan Pesanan Publik (SCR-12)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesanan/{{id_pesanan_uji}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "pesanan",
+                "{{id_pesanan_uji}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Pelacakan Pengiriman Publik (SCR-16)",
+      "item": [
+        {
+          "name": "GET Lacak Nomor Resi Publik (Data Disamarkan)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/lacak?resi={{nomor_resi_uji}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lacak"
+              ],
+              "query": [
+                {
+                  "key": "resi",
+                  "value": "{{nomor_resi_uji}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Lacak Resi Tidak Ditemukan (ERR-SHP-02)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Error code is ERR-SHP-02\", function () {",
+                  "    pm.expect(jsonData.kode).to.eql(\"ERR-SHP-02\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/lacak?resi=RESI_SALAH_999",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lacak"
+              ],
+              "query": [
+                {
+                  "key": "resi",
+                  "value": "RESI_SALAH_999"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Manajemen Produk & Harga (Staff & Owner)",
+      "item": [
+        {
+          "name": "GET Daftar Kategori Admin",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{owner_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/kategori",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "kategori"
+              ]
+            },
+            "description": "Mendapatkan daftar kategori aktif untuk form produk."
+          },
+          "response": []
+        },
+        {
+          "name": "GET Detail Produk Admin",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{owner_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/produk/{{id_produk_uji}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "produk",
+                "{{id_produk_uji}}"
+              ]
+            },
+            "description": "Mendapatkan detail produk termasuk varian dan harga untuk diedit admin."
+          },
+          "response": []
+        },
+        {
+          "name": "GET Daftar Produk Admin (SCR-11)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/produk",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "produk"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Tambah Produk Baru (FSD-2.2, SCR-05)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"namaProduk\": \"Bolu Gulung Pandan Keju\",\n  \"idKategori\": 2,\n  \"harga\": 25000,\n  \"stokAwal\": 20,\n  \"deskripsi\": \"Bolu gulung aroma pandan dengan taburan keju melimpah.\",\n  \"berat\": 300\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/produk",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "produk"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH Ubah Data Produk (FSD-2.3)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deskripsi\": \"Roti cokelat lembut dengan pasta cokelat premium lumer.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/produk/{{id_produk_uji}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "produk",
+                "{{id_produk_uji}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH Ubah Harga & Catat Riwayat (FSD-2.4, 2.5, SCR-06)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hargaBaru\": 18000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/produk/{{id_produk_uji}}/harga",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "produk",
+                "{{id_produk_uji}}",
+                "harga"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH Ubah Harga Sama (ERR-PRC-02)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 422\", function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Error code is ERR-PRC-02\", function () {",
+                  "    pm.expect(jsonData.kode).to.eql(\"ERR-PRC-02\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hargaBaru\": 18000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/produk/{{id_produk_uji}}/harga",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "produk",
+                "{{id_produk_uji}}",
+                "harga"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Riwayat Harga Produk (SCR-06)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/produk/{{id_produk_uji}}/riwayat-harga",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "produk",
+                "{{id_produk_uji}}",
+                "riwayat-harga"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE Nonaktifkan Produk oleh Staff (Tolak -> ERR-ACC-01)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Error code is ERR-ACC-01\", function () {",
+                  "    pm.expect(jsonData.kode).to.eql(\"ERR-ACC-01\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/produk/{{id_produk_uji}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "produk",
+                "{{id_produk_uji}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE Nonaktifkan Produk oleh Owner (FSD-2.6, AC-11)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/produk/{{id_produk_uji}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "produk",
+                "{{id_produk_uji}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Manajemen Stok (Staff & Owner)",
+      "item": [
+        {
+          "name": "PATCH Koreksi Stok Manual (Penyesuaian)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stokBaru\": 45,\n  \"keterangan\": \"Penyesuaian stok setelah opname harian\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/stok/{{id_varian_uji}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "stok",
+                "{{id_varian_uji}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Kasir & Transaksi (SCR-09, K-01 - K-10)",
+      "item": [
+        {
+          "name": "GET Daftar Metode Pembayaran Kasir",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staff_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/metode-pembayaran",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "metode-pembayaran"
+              ]
+            },
+            "description": "Mendapatkan daftar metode pembayaran aktif untuk pilihan kasir."
+          },
+          "response": []
+        },
+        {
+          "name": "POST Simpan Transaksi Tunai (Hitung Kembalian)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.idPenjualan) {",
+                  "    pm.collectionVariables.set(\"id_penjualan_uji\", String(jsonData.data.idPenjualan));",
+                  "    console.log(\"ID Penjualan tersimpan:\", jsonData.data.idPenjualan);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"idVarian\": 1,\n      \"qty\": 2\n    }\n  ],\n  \"idMetodePembayaran\": 1,\n  \"uangDiterima\": 50000,\n  \"kirim\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/transaksi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "transaksi"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Simpan Transaksi Tunai (Uang Kurang -> ERR-KSR-01)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 422\", function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Error code is ERR-KSR-01\", function () {",
+                  "    pm.expect(jsonData.kode).to.eql(\"ERR-KSR-01\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"idVarian\": 1,\n      \"qty\": 2\n    }\n  ],\n  \"idMetodePembayaran\": 1,\n  \"uangDiterima\": 1000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/transaksi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "transaksi"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Simpan Transaksi dengan Diskon Persen (K-04)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"idVarian\": 1,\n      \"qty\": 2\n    }\n  ],\n  \"idMetodePembayaran\": 3,\n  \"tipeDiskon\": \"persen\",\n  \"nilaiDiskon\": 10,\n  \"uangDiterima\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/transaksi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "transaksi"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Simpan Transaksi Berjenis Kirim (Auto Resi & Pengiriman)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"idVarian\": 1,\n      \"qty\": 1\n    }\n  ],\n  \"idMetodePembayaran\": 2,\n  \"kirim\": true,\n  \"ongkir\": 10000,\n  \"idKurir\": 1,\n  \"namaPenerima\": \"Ibu Sinta\",\n  \"teleponPenerima\": \"081299887766\",\n  \"alamatPenerima\": \"Jl. Tentara Pelajar No. 12\",\n  \"kotaPenerima\": \"Kebumen\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/transaksi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "transaksi"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Riwayat Transaksi (SCR-14)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/transaksi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "transaksi"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Detail Transaksi (SCR-14)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/transaksi/{{id_penjualan_uji}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "transaksi",
+                "{{id_penjualan_uji}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Cetak Struk Transaksi (K-05, SCR-09)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/transaksi/{{id_penjualan_uji}}/struk",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "transaksi",
+                "{{id_penjualan_uji}}",
+                "struk"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Batalkan Transaksi oleh Staff (Tolak -> ERR-ACC-01)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Error code is ERR-ACC-01\", function () {",
+                  "    pm.expect(jsonData.kode).to.eql(\"ERR-ACC-01\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alasan\": \"Salah catat jumlah item\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/transaksi/{{id_penjualan_uji}}/batal",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "transaksi",
+                "{{id_penjualan_uji}}",
+                "batal"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Batalkan Transaksi oleh Owner (K-08, AC-20)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alasan\": \"Salah input pesanan pelanggan, stok dikembalikan\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/transaksi/{{id_penjualan_uji}}/batal",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "transaksi",
+                "{{id_penjualan_uji}}",
+                "batal"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Pengiriman Dummy (SCR-15, S-04 - S-08)",
+      "item": [
+        {
+          "name": "GET Daftar Pengiriman",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/pengiriman",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "pengiriman"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Daftar Kurir Dummy",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/kurir",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "kurir"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH Perbarui Status Pengiriman (Diproses -> Dikirim)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Dikirim\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/pengiriman/{{id_pengiriman_uji}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "pengiriman",
+                "{{id_pengiriman_uji}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH Perbarui Status Pengiriman (Dikirim -> Terkirim)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Terkirim\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/pengiriman/{{id_pengiriman_uji}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "pengiriman",
+                "{{id_pengiriman_uji}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH Lompat Status Ilegal (Terkirim -> Diproses -> ERR-SHP-03)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 409\", function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Error code is ERR-SHP-03\", function () {",
+                  "    pm.expect(jsonData.kode).to.eql(\"ERR-SHP-03\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Diproses\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/pengiriman/{{id_pengiriman_uji}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "pengiriman",
+                "{{id_pengiriman_uji}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Generate Info Resi WhatsApp Pelanggan (S-07)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/pengiriman/{{id_pengiriman_uji}}/wa-info",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "pengiriman",
+                "{{id_pengiriman_uji}}",
+                "wa-info"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Pesanan Masuk (SCR-13, K-06)",
+      "item": [
+        {
+          "name": "GET Daftar Pesanan Masuk (Status Baru)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/pesanan?status=Baru",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "pesanan"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Baru"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Laporan & Dasbor (SCR-02, SCR-10)",
+      "item": [
+        {
+          "name": "GET Dasbor Ringkasan (Promise.all Concurrent)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/dasbor",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dasbor"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Laporan Penjualan (Semua Periode - Owner)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/laporan?periode=Semua",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "laporan"
+              ],
+              "query": [
+                {
+                  "key": "periode",
+                  "value": "Semua"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Laporan Penjualan (Bulanan - Owner)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/laporan?periode=Bulanan",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "laporan"
+              ],
+              "query": [
+                {
+                  "key": "periode",
+                  "value": "Bulanan"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Laporan Penjualan oleh Staff (Tolak -> ERR-ACC-01)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Error code is ERR-ACC-01\", function () {",
+                  "    pm.expect(jsonData.kode).to.eql(\"ERR-ACC-01\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staff_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/laporan?periode=Semua",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "laporan"
+              ],
+              "query": [
+                {
+                  "key": "periode",
+                  "value": "Semua"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Audit Log (SCR-17)",
+      "item": [
+        {
+          "name": "GET Audit Log Jejak Aktivitas (Owner)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{owner_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/audit-log?limit=25",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "audit-log"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "25"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
